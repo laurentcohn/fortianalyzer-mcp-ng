@@ -3,7 +3,7 @@
 [![CI](https://github.com/rstierli/fortianalyzer-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/rstierli/fortianalyzer-mcp/actions/workflows/ci.yml)
 [![Python Version](https://img.shields.io/badge/python-3.12%2B-blue)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.1.0--beta-green)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.1.1--beta-green)](CHANGELOG.md)
 [![FortiAnalyzer](https://img.shields.io/badge/FortiAnalyzer-7.0%20%7C%207.2%20%7C%207.4%20%7C%207.6-red)](README.md)
 
 A Model Context Protocol (MCP) server for FortiAnalyzer JSON-RPC API. This server enables AI assistants like Claude to interact with FortiAnalyzer for log analysis, reporting, security monitoring, and SOC operations.
@@ -744,6 +744,7 @@ MIT License - See [LICENSE](LICENSE) file for details.
 
 - [Anthropic](https://anthropic.com) for the [Model Context Protocol](https://modelcontextprotocol.io)
 - [Fortinet](https://fortinet.com) for FortiAnalyzer
+- [@nzkller](https://github.com/nzkller) for policy usage analysis design concepts (exact-vs-sampled semantics, `is_exact` fail-closed model)
 
 ## Related Projects
 
