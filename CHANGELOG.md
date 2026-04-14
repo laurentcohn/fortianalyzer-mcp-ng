@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Input validation for filter values (`sanitize_filter_value`) and action parameters (`validate_action`)
 - Concurrent policy query support with semaphore-bounded parallelism (`asyncio.Semaphore(5)`)
 
+### Fixed
+- **ICMP type/code parsing** — `_aggregate_port_analysis` now reads ICMP info from the FAZ `service` field (`PING`, `icmp/T/C`) instead of non-existent `icmptype`/`icmpcode` fields
+
 ### Changed
 - Total tools increased from 74 to 77 (3 new traffic analysis tools)
 - Version bumped to 1.1.0-beta
