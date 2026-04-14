@@ -213,10 +213,7 @@ class TestAggregateTrafficProfile:
 
     def test_top_n_limiting(self) -> None:
         """top_n should limit the number of returned items."""
-        logs = [
-            {"dstport": i, "proto": "6", "service": f"svc-{i}"}
-            for i in range(20)
-        ]
+        logs = [{"dstport": i, "proto": "6", "service": f"svc-{i}"} for i in range(20)]
         result = _aggregate_traffic_profile(logs, 5)
         assert len(result["top_ports"]) == 5
         assert len(result["top_services"]) == 5

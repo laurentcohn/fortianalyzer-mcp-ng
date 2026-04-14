@@ -63,8 +63,7 @@ def validate_action(action: str | None) -> str | None:
     action = action.strip().lower()
     if action not in VALID_ACTIONS:
         raise ValidationError(
-            f"Invalid action '{action}'. "
-            f"Allowed values: {', '.join(sorted(VALID_ACTIONS))}"
+            f"Invalid action '{action}'. Allowed values: {', '.join(sorted(VALID_ACTIONS))}"
         )
     return action
 
@@ -89,9 +88,7 @@ def validate_policy_ids(policy_ids: list[int]) -> list[int]:
         )
     for pid in policy_ids:
         if not isinstance(pid, int) or pid <= 0:
-            raise ValidationError(
-                f"Invalid policy ID: {pid}. Must be a positive integer."
-            )
+            raise ValidationError(f"Invalid policy ID: {pid}. Must be a positive integer.")
     return policy_ids
 
 
@@ -270,9 +267,7 @@ async def _query_policy_logs(
 # =============================================================================
 
 
-def _aggregate_traffic_profile(
-    logs: list[dict[str, Any]], top_n: int
-) -> dict[str, Any]:
+def _aggregate_traffic_profile(logs: list[dict[str, Any]], top_n: int) -> dict[str, Any]:
     """Aggregate log entries into a traffic profile.
 
     Returns top ports, services, and applications with hit counts.
@@ -365,9 +360,7 @@ def _aggregate_port_analysis(logs: list[dict[str, Any]]) -> dict[str, Any]:
         "total_hits": total,
         "is_exact": True,
         "ports": [{"port": p, "hits": c} for p, c in port_counter.most_common()],
-        "protocols": [
-            {"protocol": p, "hits": c} for p, c in protocol_counter.most_common()
-        ],
+        "protocols": [{"protocol": p, "hits": c} for p, c in protocol_counter.most_common()],
         "portless_protocols": sorted(portless_protocols),
         "uncovered_port_hits": uncovered,
         "icmp": (
@@ -405,9 +398,7 @@ def _aggregate_protocol_summary(logs: list[dict[str, Any]]) -> dict[str, Any]:
 
     return {
         "total_hits": total,
-        "protocols": [
-            {"protocol": p, "hits": c} for p, c in protocol_counter.most_common()
-        ],
+        "protocols": [{"protocol": p, "hits": c} for p, c in protocol_counter.most_common()],
     }
 
 
@@ -471,19 +462,18 @@ async def get_policy_traffic_profile(
         start = time.monotonic()
 
         # Query all policies concurrently
-        tasks = [
-            _query_policy_logs(adom, device, pid, time_range, action)
-            for pid in policy_ids
-        ]
+        tasks = [_query_policy_logs(adom, device, pid, time_range, action) for pid in policy_ids]
         results_list = await asyncio.gather(*tasks, return_exceptions=True)
 
         per_policy = []
         for pid, result in zip(policy_ids, results_list, strict=True):
             if isinstance(result, Exception):
-                per_policy.append({
-                    "policy_id": pid,
-                    "error": str(result),
-                })
+                per_policy.append(
+                    {
+                        "policy_id": pid,
+                        "error": str(result),
+                    }
+                )
             else:
                 profile = _aggregate_traffic_profile(result, top_n)
                 profile["policy_id"] = pid
@@ -561,19 +551,18 @@ async def get_policy_port_analysis(
 
         start = time.monotonic()
 
-        tasks = [
-            _query_policy_logs(adom, device, pid, time_range, action)
-            for pid in policy_ids
-        ]
+        tasks = [_query_policy_logs(adom, device, pid, time_range, action) for pid in policy_ids]
         results_list = await asyncio.gather(*tasks, return_exceptions=True)
 
         per_policy = []
         for pid, result in zip(policy_ids, results_list, strict=True):
             if isinstance(result, Exception):
-                per_policy.append({
-                    "policy_id": pid,
-                    "error": str(result),
-                })
+                per_policy.append(
+                    {
+                        "policy_id": pid,
+                        "error": str(result),
+                    }
+                )
             else:
                 analysis = _aggregate_port_analysis(result)
                 analysis["policy_id"] = pid
@@ -644,19 +633,18 @@ async def get_policy_protocol_summary(
 
         start = time.monotonic()
 
-        tasks = [
-            _query_policy_logs(adom, device, pid, time_range, action)
-            for pid in policy_ids
-        ]
+        tasks = [_query_policy_logs(adom, device, pid, time_range, action) for pid in policy_ids]
         results_list = await asyncio.gather(*tasks, return_exceptions=True)
 
         per_policy = []
         for pid, result in zip(policy_ids, results_list, strict=True):
             if isinstance(result, Exception):
-                per_policy.append({
-                    "policy_id": pid,
-                    "error": str(result),
-                })
+                per_policy.append(
+                    {
+                        "policy_id": pid,
+                        "error": str(result),
+                    }
+                )
             else:
                 summary = _aggregate_protocol_summary(result)
                 summary["policy_id"] = pid
