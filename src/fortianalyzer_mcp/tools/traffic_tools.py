@@ -342,11 +342,22 @@ def _aggregate_port_analysis(logs: list[dict[str, Any]]) -> dict[str, Any]:
             # Portless protocol (ICMP, GRE, ESP, etc.)
             portless_protocols.add(proto_str)
 
-        # Track ICMP types
-        icmp_type = log.get("icmptype")
-        if icmp_type is not None:
-            icmp_code = log.get("icmpcode", 0)
-            icmp_types[f"type={icmp_type}/code={icmp_code}"] += 1
+        # Track ICMP types from service field
+        # FAZ logs encode ICMP info in service field, not icmptype/icmpcode:
+        #   "PING" = echo request (type=8/code=0)
+        #   "icmp/3/3" = type=3/code=3
+        if proto_str == "1":
+            service = str(log.get("service", ""))
+            if service.upper() == "PING":
+                icmp_types["type=8/code=0"] += 1
+            elif service.startswith("icmp/"):
+                parts = service.split("/")
+                if len(parts) == 3:
+                    icmp_types[f"type={parts[1]}/code={parts[2]}"] += 1
+                else:
+                    icmp_types[f"service={service}"] += 1
+            elif service:
+                icmp_types[f"service={service}"] += 1
 
     uncovered = total - port_hits
 

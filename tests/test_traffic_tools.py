@@ -278,19 +278,24 @@ class TestAggregatePortAnalysis:
         assert result["uncovered_port_hits"] == 0
 
     def test_icmp_handling(self) -> None:
-        """ICMP logs should be tracked separately."""
+        """ICMP logs should be tracked via service field (FAZ format)."""
         logs = [
-            {"proto": "1", "dstport": 0, "icmptype": 8, "icmpcode": 0},
-            {"proto": "1", "dstport": 0, "icmptype": 8, "icmpcode": 0},
-            {"proto": "1", "dstport": 0, "icmptype": 0, "icmpcode": 0},
+            # FAZ encodes ICMP echo as service=PING
+            {"proto": "1", "dstport": 0, "service": "PING"},
+            {"proto": "1", "dstport": 0, "service": "PING"},
+            # FAZ encodes ICMP type/code as service=icmp/T/C
+            {"proto": "1", "dstport": 0, "service": "icmp/3/3"},
         ]
         result = _aggregate_port_analysis(logs)
         assert result["total_hits"] == 3
         assert "1" in result["portless_protocols"]
         assert len(result["icmp"]) == 2
-        # type=8/code=0 should be most common
+        # PING (type=8/code=0) should be most common
         assert result["icmp"][0]["type_code"] == "type=8/code=0"
         assert result["icmp"][0]["hits"] == 2
+        # icmp/3/3 → type=3/code=3
+        assert result["icmp"][1]["type_code"] == "type=3/code=3"
+        assert result["icmp"][1]["hits"] == 1
 
     def test_portless_protocols(self) -> None:
         """Protocols without ports (GRE, ESP) should be tracked."""
