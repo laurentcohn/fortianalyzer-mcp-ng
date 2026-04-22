@@ -36,7 +36,7 @@ This fork keeps the original scope, but fixes a few release and runtime issues t
 ## Quick start
 
 ```bash
-git clone https://github.com/<your-user>/fortianalyzer-mcp-ng.git
+git clone https://github.com/laurentcohn/fortianalyzer-mcp-ng.git
 cd fortianalyzer-mcp-ng
 
 uv venv
@@ -70,7 +70,7 @@ The legacy alias `fortianalyzer-mcp` is still installed for compatibility, but `
 ### Option 1: `uv` (recommended)
 
 ```bash
-git clone https://github.com/<your-user>/fortianalyzer-mcp-ng.git
+git clone https://github.com/laurentcohn/fortianalyzer-mcp-ng.git
 cd fortianalyzer-mcp-ng
 
 uv venv
@@ -81,7 +81,7 @@ uv sync
 ### Option 2: `pip`
 
 ```bash
-git clone https://github.com/<your-user>/fortianalyzer-mcp-ng.git
+git clone https://github.com/laurentcohn/fortianalyzer-mcp-ng.git
 cd fortianalyzer-mcp-ng
 
 python -m venv .venv
