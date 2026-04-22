@@ -339,7 +339,7 @@ async def search_ips_logs(
                     "status": "success",
                     "count": len(logs),
                     "pcap_available_count": pcap_available,
-                    "total": fetch_result.get("total-lines", len(logs)),
+                    "total": fetch_result.get("total-count", fetch_result.get("total-lines", len(logs))),
                     "logs": logs,
                     "filter_applied": filter_str or "none",
                     "tid": tid,

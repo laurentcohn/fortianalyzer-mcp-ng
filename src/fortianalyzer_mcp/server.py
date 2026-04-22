@@ -2,6 +2,7 @@
 
 import hmac
 import logging
+import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
@@ -20,6 +21,18 @@ settings.configure_logging()
 
 # Create FortiAnalyzer client (will be initialized on lifespan)
 faz_client: FortiAnalyzerClient | None = None
+
+
+def _health_snapshot() -> dict[str, Any]:
+    """Build a consistent health snapshot for both stdio and HTTP surfaces."""
+    connected = faz_client is not None and faz_client.is_connected
+    mode = settings.FAZ_TOOL_MODE
+    return {
+        "status": "healthy" if connected else "degraded",
+        "service": "fortianalyzer-mcp-ng",
+        "fortianalyzer_connected": connected,
+        "tool_mode": mode,
+    }
 
 
 def get_faz_client() -> FortiAnalyzerClient | None:
@@ -85,12 +98,16 @@ def health_check() -> str:
     Returns:
         Health status message
     """
-    mode = settings.FAZ_TOOL_MODE
-    if mode == "full":
+    snapshot = _health_snapshot()
+    if snapshot["tool_mode"] == "full":
         tool_info = "All tools loaded"
     else:
         tool_info = "Discovery tools + dynamic execution"
-    return f"FortiAnalyzer MCP Server is healthy (mode: {mode}, {tool_info})"
+    return (
+        "FortiAnalyzer MCP Server is "
+        f"{snapshot['status']} (mode: {snapshot['tool_mode']}, {tool_info}, "
+        f"fortianalyzer_connected={snapshot['fortianalyzer_connected']})"
+    )
 
 
 # Dynamic mode: lightweight discovery tools
@@ -121,6 +138,8 @@ def register_dynamic_tools(mcp_server: FastMCP) -> None:
                 ("list_tasks", "List background tasks"),
                 ("get_task", "Get task status"),
                 ("wait_for_task", "Wait for task to complete"),
+                ("get_api_ratelimit", "Get API rate limit settings"),
+                ("update_api_ratelimit", "Update API rate limit settings"),
             ],
             "logs": [
                 ("query_logs", "Query logs with two-step TID workflow"),
@@ -168,12 +187,14 @@ def register_dynamic_tools(mcp_server: FastMCP) -> None:
                 ("get_policy_hits", "Get policy hit statistics"),
             ],
             "reports": [
-                ("list_report_templates", "List report templates"),
+                ("list_report_layouts", "List report layouts"),
                 ("run_report", "Run a report"),
                 ("fetch_report", "Fetch report status"),
                 ("get_report_data", "Download report data"),
+                ("get_running_reports", "List currently running reports"),
                 ("get_report_history", "Get report history"),
                 ("run_and_wait_report", "Run report and wait"),
+                ("save_report", "Download and save report files"),
             ],
             "incidents": [
                 ("get_incidents", "Get security incidents"),
@@ -261,6 +282,8 @@ def register_dynamic_tools(mcp_server: FastMCP) -> None:
             "list_tasks": system_tools.list_tasks,
             "get_task": system_tools.get_task,
             "wait_for_task": system_tools.wait_for_task,
+            "get_api_ratelimit": system_tools.get_api_ratelimit,
+            "update_api_ratelimit": system_tools.update_api_ratelimit,
             # Log tools
             "query_logs": log_tools.query_logs,
             "get_log_search_progress": log_tools.get_log_search_progress,
@@ -303,12 +326,14 @@ def register_dynamic_tools(mcp_server: FastMCP) -> None:
             "get_top_cloud_applications": fortiview_tools.get_top_cloud_applications,
             "get_policy_hits": fortiview_tools.get_policy_hits,
             # Report tools
-            "list_report_templates": report_tools.list_report_templates,
+            "list_report_layouts": report_tools.list_report_layouts,
             "run_report": report_tools.run_report,
             "fetch_report": report_tools.fetch_report,
             "get_report_data": report_tools.get_report_data,
+            "get_running_reports": report_tools.get_running_reports,
             "get_report_history": report_tools.get_report_history,
             "run_and_wait_report": report_tools.run_and_wait_report,
+            "save_report": report_tools.save_report,
             # Incident tools
             "get_incidents": incident_tools.get_incidents,
             "get_incident": incident_tools.get_incident,
@@ -357,7 +382,7 @@ def register_dynamic_tools(mcp_server: FastMCP) -> None:
             "categories": {
                 "system": {
                     "description": "System status, HA, ADOMs, devices, and tasks",
-                    "tool_count": 9,
+                    "tool_count": 11,
                 },
                 "logs": {
                     "description": "Log search with TID workflow, analytics",
@@ -377,7 +402,7 @@ def register_dynamic_tools(mcp_server: FastMCP) -> None:
                 },
                 "reports": {
                     "description": "Report templates and execution with TID workflow",
-                    "tool_count": 6,
+                    "tool_count": 8,
                 },
                 "incidents": {
                     "description": "Incident management and tracking",
@@ -396,7 +421,7 @@ def register_dynamic_tools(mcp_server: FastMCP) -> None:
                     "tool_count": 3,
                 },
             },
-            "total_tools": 72,
+            "total_tools": 76,
             "note": "Use find_fortianalyzer_tool() to search, execute_advanced_tool() to run",
         }
 
@@ -544,18 +569,8 @@ def run_http() -> None:
     # Health check endpoint
     async def health_endpoint(request: Request) -> JSONResponse:
         """HTTP health check endpoint for Docker health checks."""
-        global faz_client
-
-        # Check if client is connected
-        is_connected = faz_client is not None and faz_client.is_connected
-
-        health_status = {
-            "status": "healthy",
-            "service": "fortianalyzer-mcp",
-            "fortianalyzer_connected": is_connected,
-        }
-
-        return JSONResponse(health_status, status_code=200)
+        snapshot = _health_snapshot()
+        return JSONResponse(snapshot, status_code=200 if snapshot["fortianalyzer_connected"] else 503)
 
     # Create Starlette app with lifespan
     @asynccontextmanager

@@ -242,7 +242,7 @@ async def query_logs(
                 return {
                     "status": "success",
                     "count": len(logs),
-                    "total": fetch_result.get("total-lines", len(logs)),
+                    "total": fetch_result.get("total-count", fetch_result.get("total-lines", len(logs))),
                     "percentage": percentage,
                     "logs": logs,
                     "tid": tid,

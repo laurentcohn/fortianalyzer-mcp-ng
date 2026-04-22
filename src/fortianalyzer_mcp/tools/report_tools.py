@@ -18,6 +18,7 @@ from fortianalyzer_mcp.utils.validation import (
     ValidationError,
     get_default_adom,
     validate_adom,
+    validate_filename,
     validate_output_path,
 )
 
@@ -799,9 +800,11 @@ async def save_report(
 
                     # Determine output filename
                     # Use original filename or create based on report name
-                    base_filename = os.path.basename(filename)
+                    base_filename = validate_filename(os.path.basename(filename))
                     if not base_filename:
-                        base_filename = f"{report_name}.{output_format.lower()}"
+                        base_filename = validate_filename(
+                            f"{report_name}.{output_format.lower()}"
+                        )
 
                     output_file = output_path / base_filename
 
@@ -825,7 +828,8 @@ async def save_report(
             # Not a ZIP file - save raw data directly
             logger.info("Data is not a ZIP file, saving directly")
             ext = output_format.lower()
-            output_file = output_path / f"{report_name}.{ext}"
+            safe_filename = validate_filename(f"{report_name}.{ext}")
+            output_file = output_path / safe_filename
 
             counter = 1
             original_output = output_file
