@@ -5,7 +5,7 @@ All notable changes to FortiAnalyzer MCP Server will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.1-beta] - 2026-04-22
 
 ### Added
 - **Policy Traffic Analysis Tools** (3 tools) - Analyze traffic patterns per firewall policy for policy hardening
@@ -17,10 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **ICMP type/code parsing** — `_aggregate_port_analysis` now reads ICMP info from the FAZ `service` field (`PING`, `icmp/T/C`) instead of non-existent `icmptype`/`icmpcode` fields
+- **`is_exact` flag correctness** — `get_policy_port_analysis` now returns `is_exact=False` and a `limit_used` field when the query limit is reached, preventing misinterpretation of truncated results as complete port enumerations
 
 ### Changed
 - Total tools increased from 74 to 77 (3 new traffic analysis tools)
-- Version bumped to 1.1.0-beta
+- `SECURITY.md` references `FAZ_ALLOWED_OUTPUT_DIRS` (correct env var name)
+- `pyproject.toml` consolidated to a single `dev` extra (removed duplicate ruff definition)
 
 ## [0.4.0-beta] - 2026-01-17
 
