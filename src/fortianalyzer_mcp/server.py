@@ -453,7 +453,6 @@ else:
 
 def main() -> None:
     """Entry point for the MCP server."""
-    import os
     import sys
 
     # Determine server mode from settings
@@ -570,7 +569,9 @@ def run_http() -> None:
     async def health_endpoint(request: Request) -> JSONResponse:
         """HTTP health check endpoint for Docker health checks."""
         snapshot = _health_snapshot()
-        return JSONResponse(snapshot, status_code=200 if snapshot["fortianalyzer_connected"] else 503)
+        return JSONResponse(
+            snapshot, status_code=200 if snapshot["fortianalyzer_connected"] else 503
+        )
 
     # Create Starlette app with lifespan
     @asynccontextmanager
