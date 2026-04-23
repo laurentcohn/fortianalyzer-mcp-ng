@@ -261,6 +261,20 @@ class TestAggregatePortAnalysis:
         assert result["protocols"] == []
         assert result["uncovered_port_hits"] == 0
 
+    def test_is_exact_false_when_at_limit(self) -> None:
+        """is_exact should be False when log count equals the limit."""
+        logs = [{"dstport": 80, "proto": "6"} for _ in range(100)]
+        result = _aggregate_port_analysis(logs, limit=100)
+        assert result["is_exact"] is False
+        assert result["total_hits"] == 100
+
+    def test_is_exact_true_when_below_limit(self) -> None:
+        """is_exact should be True when log count is below the limit."""
+        logs = [{"dstport": 80, "proto": "6"} for _ in range(50)]
+        result = _aggregate_port_analysis(logs, limit=100)
+        assert result["is_exact"] is True
+        assert result["total_hits"] == 50
+
     def test_basic_port_enumeration(self) -> None:
         """Basic port/protocol enumeration."""
         logs = [
