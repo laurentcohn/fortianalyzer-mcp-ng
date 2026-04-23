@@ -5,6 +5,14 @@ All notable changes to FortiAnalyzer MCP Server will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2-beta] - 2026-04-23
+
+### Fixed
+- **`is_exact` in port analysis** — `_aggregate_port_analysis` now correctly computes `is_exact` based on whether the log query hit the result limit, instead of always returning `True`
+
+### Added
+- **Usage disclaimer** in README for independent community project notice
+
 ## [Unreleased]
 
 ### Added
