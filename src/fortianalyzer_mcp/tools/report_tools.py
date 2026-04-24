@@ -802,9 +802,7 @@ async def save_report(
                     # Use original filename or create based on report name
                     base_filename = validate_filename(os.path.basename(filename))
                     if not base_filename:
-                        base_filename = validate_filename(
-                            f"{report_name}.{output_format.lower()}"
-                        )
+                        base_filename = validate_filename(f"{report_name}.{output_format.lower()}")
 
                     output_file = output_path / base_filename
 

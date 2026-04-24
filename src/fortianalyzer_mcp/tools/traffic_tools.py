@@ -30,6 +30,7 @@ _QUERY_SEMAPHORE = asyncio.Semaphore(5)
 
 # Default and max search parameters
 DEFAULT_SEARCH_TIMEOUT = 120
+DEFAULT_LOG_LIMIT = 1000
 POLL_INTERVAL = 1.0
 MAX_POLICY_IDS = 25
 DEFAULT_TOP_N = 10
@@ -195,7 +196,7 @@ async def _query_policy_logs(
     policy_id: int,
     time_range: str,
     action: str | None,
-    limit: int = 1000,
+    limit: int = DEFAULT_LOG_LIMIT,
     timeout: int = DEFAULT_SEARCH_TIMEOUT,
 ) -> list[dict[str, Any]]:
     """Query traffic logs for a single policy ID.
@@ -310,11 +311,15 @@ def _aggregate_traffic_profile(logs: list[dict[str, Any]], top_n: int) -> dict[s
     }
 
 
-def _aggregate_port_analysis(logs: list[dict[str, Any]], limit: int = 1000) -> dict[str, Any]:
+def _aggregate_port_analysis(
+    logs: list[dict[str, Any]],
+    limit: int = DEFAULT_LOG_LIMIT,
+) -> dict[str, Any]:
     """Aggregate logs into exact port/protocol enumeration.
 
     Returns complete port list, protocol breakdown, ICMP summary,
-    and is_exact indicator.
+    and is_exact indicator. `is_exact` is True only when fewer logs
+    were returned than the query limit (i.e. the result was not truncated).
     """
     port_counter: Counter[str] = Counter()
     protocol_counter: Counter[str] = Counter()
@@ -358,7 +363,8 @@ def _aggregate_port_analysis(logs: list[dict[str, Any]], limit: int = 1000) -> d
 
     return {
         "total_hits": total,
-        "is_exact": len(logs) < limit,
+        "is_exact": total < limit,
+        "limit_used": limit,
         "ports": [{"port": p, "hits": c} for p, c in port_counter.most_common()],
         "protocols": [{"protocol": p, "hits": c} for p, c in protocol_counter.most_common()],
         "portless_protocols": sorted(portless_protocols),
@@ -564,7 +570,7 @@ async def get_policy_port_analysis(
                     }
                 )
             else:
-                analysis = _aggregate_port_analysis(result, limit=1000)
+                analysis = _aggregate_port_analysis(result, limit=DEFAULT_LOG_LIMIT)
                 analysis["policy_id"] = pid
                 per_policy.append(analysis)
 
