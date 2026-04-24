@@ -2,19 +2,20 @@
 
 `fortianalyzer-mcp-ng` is a maintained fork of [`rstierli/fortianalyzer-mcp`](https://github.com/rstierli/fortianalyzer-mcp). It exposes the FortiAnalyzer JSON-RPC API as an MCP server so Claude Desktop, Claude Code, LM Studio, Open WebUI, and other MCP-compatible clients can query logs, run reports, inspect FortiView data, manage incidents, and automate common FortiAnalyzer workflows.
 
-This project is not affiliated with, endorsed by, or supported by Fortinet. FortiAnalyzer is a trademark of Fortinet, Inc.
+This is an independent community project. It is not affiliated with, endorsed by, or supported by Fortinet. FortiAnalyzer is a trademark of Fortinet, Inc. Use at your own risk and validate changes in a non-production environment before applying them to production systems.
 
 ## Why this fork exists
 
-This fork keeps the original scope, but fixes a few release and runtime issues that matter in practice:
+This fork keeps the upstream scope and current upstream fixes, while preserving the fork-specific packaging and runtime improvements needed for daily use:
 
 - publishable package name and CLI entrypoint: `fortianalyzer-mcp-ng`
-- dynamic tool mode repaired so report tools can actually be discovered and executed
-- HTTP `/health` now reflects the real FAZ connection state and returns `503` when disconnected
+- dynamic tool mode repaired so report tools can be discovered and executed
+- HTTP `/health` reflects the real FAZ connection state and returns `503` when disconnected
 - safer report filename handling for exported files
 - more consistent total counters in log and PCAP responses
-- logging setup now accepts `LOG_FORMAT=json` cleanly
-- packaging fixed so editable installs and wheel builds work under the renamed distribution
+- logging setup accepts `LOG_FORMAT=json` cleanly
+- upstream `is_exact` fix for port analysis is included
+- packaging remains fixed for editable installs and wheel builds under the renamed distribution
 
 ## Feature overview
 
@@ -98,7 +99,7 @@ cp .env.example .env
 docker compose up --build -d
 ```
 
-The included compose setup exposes port `8001`, mounts `./logs` and `./output`, and enables report/PCAP file writes inside `/app/output`.
+The bundled compose setup exposes port `8001`, mounts `./logs` and `./output`, and enables report/PCAP file writes inside `/app/output`.
 
 ## Configuration
 
@@ -130,7 +131,7 @@ Important settings:
 | `full` | all registered tools | default and simplest choice |
 | `dynamic` | discovery surface plus on-demand execution | useful when client context budget matters |
 
-Dynamic mode is fixed in this fork and is safe to use again. If you want the least surprising behavior, keep `FAZ_TOOL_MODE=full`.
+Dynamic mode is fixed in this fork and includes the current upstream traffic-analysis behavior. If you want the least surprising behavior, keep `FAZ_TOOL_MODE=full`.
 
 ### File output security
 
@@ -254,23 +255,14 @@ DEFAULT_ADOM=root \
 pytest -m "not integration"
 ```
 
-Current fork status:
+Current validated fork status:
 
-- `341 passed`
+- `343 passed`
 - `56 deselected`
 
-## What changed compared with upstream
-
-- dynamic execution map repaired for report operations
-- health reporting made truthful for both MCP and HTTP surfaces
-- report export path handling tightened for safer file writes
-- packaging adjusted for the renamed `-ng` distribution
-- logging setup made more robust in local and CI environments
-
-## Upstream, license, and support
+## Upstream, versioning, and support
 
 - upstream project: [`rstierli/fortianalyzer-mcp`](https://github.com/rstierli/fortianalyzer-mcp)
-- this fork started from upstream commit `48c5bba`
+- current upstream base integrated in this fork: `v1.1.2-beta`
+- fork package version tracks the integrated upstream line with an `-ng` suffix
 - license: [MIT](LICENSE)
-
-Small, reviewable fixes are intentional so cherry-picking changes upstream remains easy.

@@ -310,7 +310,7 @@ def _aggregate_traffic_profile(logs: list[dict[str, Any]], top_n: int) -> dict[s
     }
 
 
-def _aggregate_port_analysis(logs: list[dict[str, Any]]) -> dict[str, Any]:
+def _aggregate_port_analysis(logs: list[dict[str, Any]], limit: int = 1000) -> dict[str, Any]:
     """Aggregate logs into exact port/protocol enumeration.
 
     Returns complete port list, protocol breakdown, ICMP summary,
@@ -358,7 +358,7 @@ def _aggregate_port_analysis(logs: list[dict[str, Any]]) -> dict[str, Any]:
 
     return {
         "total_hits": total,
-        "is_exact": True,
+        "is_exact": len(logs) < limit,
         "ports": [{"port": p, "hits": c} for p, c in port_counter.most_common()],
         "protocols": [{"protocol": p, "hits": c} for p, c in protocol_counter.most_common()],
         "portless_protocols": sorted(portless_protocols),
@@ -564,7 +564,7 @@ async def get_policy_port_analysis(
                     }
                 )
             else:
-                analysis = _aggregate_port_analysis(result)
+                analysis = _aggregate_port_analysis(result, limit=1000)
                 analysis["policy_id"] = pid
                 per_policy.append(analysis)
 
