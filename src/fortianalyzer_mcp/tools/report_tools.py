@@ -106,6 +106,35 @@ def _convert_to_api_time_period(time_range: str) -> str:
     return time_map.get(time_range, "last-7-days")
 
 
+def _classify_report_fetch_result(fetch_result: Any) -> tuple[str, str | None]:
+    """Classify report fetch output as success, error, or pending."""
+    if not isinstance(fetch_result, dict):
+        return "pending", None
+
+    raw_state = fetch_result.get("state", fetch_result.get("status"))
+    state = str(raw_state).strip().lower() if raw_state is not None else ""
+
+    raw_progress = fetch_result.get(
+        "percent",
+        fetch_result.get("percentage", fetch_result.get("progress", 0)),
+    )
+    try:
+        progress = int(raw_progress)
+    except (TypeError, ValueError):
+        progress = 0
+
+    if state in {"generated", "done", "completed", "complete", "finished", "success"}:
+        return "success", None
+
+    if state in {"failed", "error", "aborted", "abort", "cancelled", "canceled"}:
+        return "error", f"Report failed with state: {state}"
+
+    if progress >= 100 and state in {"", "ok", "ready"}:
+        return "success", None
+
+    return "pending", None
+
+
 async def _get_layout_id_by_title(client: Any, adom: str, title: str) -> int | None:
     """Look up layout-id by report title.
 
@@ -667,24 +696,18 @@ async def run_and_wait_report(
                     break
 
             if our_report:
-                # Report is still running
                 percentage = our_report.get("percent", our_report.get("percentage", 0))
                 logger.info(f"Report {tid} progress: {percentage}%")
 
-                if percentage >= 100:
-                    return {
-                        "status": "success",
-                        "tid": tid,
-                        "layout": layout,
-                        "layout_id": layout_id,
-                        "adom": adom,
-                        "time_period": time_period,
-                        "message": "Report completed. Use get_report_data() to download.",
-                    }
-            else:
-                # Report not in running list - either completed or failed
-                # Try to get report data to confirm completion
-                logger.info(f"Report {tid} no longer in running list, checking if completed")
+                if percentage < 100:
+                    await asyncio.sleep(poll_interval)
+                    continue
+
+            logger.info(f"Checking final report state for {tid}")
+            fetch_result = await client.report_fetch(adom=adom, tid=tid)
+            fetch_status, fetch_message = _classify_report_fetch_result(fetch_result)
+
+            if fetch_status == "success":
                 return {
                     "status": "success",
                     "tid": tid,
@@ -692,7 +715,20 @@ async def run_and_wait_report(
                     "layout_id": layout_id,
                     "adom": adom,
                     "time_period": time_period,
+                    "data": fetch_result,
                     "message": "Report completed. Use get_report_data() to download.",
+                }
+
+            if fetch_status == "error":
+                return {
+                    "status": "error",
+                    "tid": tid,
+                    "layout": layout,
+                    "layout_id": layout_id,
+                    "adom": adom,
+                    "time_period": time_period,
+                    "data": fetch_result,
+                    "message": fetch_message or "Report failed.",
                 }
 
             await asyncio.sleep(poll_interval)

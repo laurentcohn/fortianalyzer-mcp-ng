@@ -60,9 +60,11 @@ async def server_lifespan(server: FastMCP) -> AsyncIterator[dict]:
 
     # Initialize and connect FortiAnalyzer client
     faz_client = FortiAnalyzerClient.from_settings(settings)
-    await faz_client.connect()
-
-    logger.info("FortiAnalyzer MCP server started successfully")
+    try:
+        await faz_client.connect()
+        logger.info("FortiAnalyzer MCP server started successfully")
+    except Exception as e:
+        logger.warning(f"FortiAnalyzer connection failed: {e}. Server will still start.")
 
     try:
         yield {"faz_client": faz_client}
